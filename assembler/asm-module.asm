@@ -1,83 +1,116 @@
-#include <stdio.h>
+bits 64
 
-int g_arr_32[ ]={-30, 20, -20, -10};
-long g_arr_64[ ]={ -100000000, -200000000, 200000000,100000000};
-long g_arr_positive[]={0,0,0,0};
-long g_arr_negative[]={0,0,0,0};
+section .data
 
-short g_greeting_code[] = {0x6c65,0x6c48,0x6f21};
-char g_greeting_text[] = {0,0,0,0,0,0};
+    extern g_arr_32
+    extern g_arr_64
+    extern g_arr_positive
+    extern g_arr_negative
 
-char g_greeting_input[] = {'d', 'a', 'z', 'N', 'a', 'r'};
+    extern g_greeting_code
+    extern g_greeting_coded
+    extern g_greeting_input
+    extern g_greeting_text
+    extern g_index_a
+    extern g_index_b
 
-int g_index_a=0;
-int g_index_b=3;
+section .text
 
-void separate();
-void swap();
-void decode();
-void swap_index();
-void code();
+global separate
+separate:
+    enter 0,0
+        
+        ;přesun z g_arr_32 
+        movsx rax, dword [g_arr_32]
+        movsx rbx, dword [g_arr_32 + 1 * 4]
+        movsx rcx, dword [g_arr_32 + 2 * 4]
+        movsx rdx, dword [g_arr_32 + 3 * 4]
+        mov [g_arr_positive], rax
+        mov [g_arr_positive + 1 * 8], rbx
+        mov [g_arr_negative + 2 * 8], rcx
+        mov [g_arr_negative + 3 * 8], rdx
+
+        ;přesun z g_arr_64
+        movsx rax, dword [g_arr_64]
+        movsx rbx, dword [g_arr_64 + 1 * 8]
+        movsx rcx, dword [g_arr_64 + 2 * 8]
+        movsx rdx, dword [g_arr_64 + 3 * 8]
+        mov [g_arr_negative], rax
+        mov [g_arr_negative + 1 * 8], rbx
+        mov [g_arr_positive + 2 * 8], rcx
+        mov [g_arr_positive + 3 * 8], rdx
+
+    leave
+    ret
 
 
+global swap
+swap:
+    enter 0,0
+
+        ;prohození prvků v g_arr_positive
+        mov rax, [g_arr_positive + 2 * 8]
+        mov rbx, [g_arr_positive + 3 * 8]
+        mov [g_arr_positive + 2 * 8], rbx
+        mov [g_arr_positive + 3 * 8], rax
+
+        ;prohození prvků v g_arr_negative
+        mov rax, [g_arr_negative]
+        mov rbx, [g_arr_negative + 8]
+        mov [g_arr_negative + 8], rax
+        mov [g_arr_negative], rbx
+
+    leave
+    ret
 
 
-int main(int argc, char const *argv[])
-{
-    //separate
-    separate();
+global decode
+decode:
+    enter 0,0
 
-    printf("\nSeparate:\n\tPositive: ");
-    for (int i = 0; i < 4; i++)
-    {
-        printf("\t%ld", g_arr_positive[i]);
-    }
+        ;decode
+        mov ax, [g_greeting_code]
+        mov bx, [g_greeting_code + 2]
+        mov cx, [g_greeting_code + 4]
+        
+        mov [g_greeting_text], ah
+        mov [g_greeting_text + 1], al
+
+        mov [g_greeting_text + 2], bh
+        mov [g_greeting_text + 3], bl
+
+        mov [g_greeting_text + 4], ch
+        mov [g_greeting_text + 5], cl 
+
+    leave
+    ret
+
+global swap_index
+swap_index:
+    enter 0,0
+        mov rax, [g_index_a]
+        mov rbx, [g_index_b]
+        mov cl,  [g_greeting_text + rax]
+        mov ch,  [g_greeting_text + rbx]
+        mov [g_greeting_text + rax], ch
+        mov [g_greeting_text + rbx], cl
+
+    leave
+    ret
     
-    printf("\n\tNegative: ");
-    for (int i = 0; i < 4; i++)
-    {
-        printf("\t%ld", g_arr_negative[i]);
-    }
+global code
+code:
+    enter 0,0
+        mov ah, [g_greeting_input]
+        mov al, [g_greeting_input + 1]
+        mov [g_greeting_code], ax
 
-    //swap
-    swap();
-    printf("\n\nSwap:\n\tPositive: ");
-    for (int i = 0; i < 4; i++)
-    {
-        printf("\t%ld", g_arr_positive[i]);
-    }
-    
-    printf("\n\tNegative: ");
-    for (int i = 0; i < 4; i++)
-    {
-        printf("\t%ld", g_arr_negative[i]);
-    }
+        mov bh, [g_greeting_input + 2]
+        mov bl, [g_greeting_input + 3]
+        mov [g_greeting_code + 2], bx
 
-    //decode
-    code();
-
-    printf("\n\nkód:\n\t");
-    for (int i = 0; i < 3; i++)
-    {
-        printf("%x, ", g_greeting_code[i]);
-    }
-    
-
-    decode();
-    printf("\n\nDecode:\n\t");
-    for (int i = 0; i < 6; i++)
-    {
-        printf("%c", g_greeting_text[i]);
-    }
-
-    //swap
-    swap_index();
-    printf("\n\nSwap_index:\n\t");
-    for (int i = 0; i < 6; i++)
-    {
-        printf("%c", g_greeting_text[i]);
-    }
-    printf("\n\n");
-
-    return 0;
-}
+        mov ch, [g_greeting_input + 4]
+        mov cl, [g_greeting_input + 5]
+        mov [g_greeting_code + 4], cx
+    leave
+    ret
